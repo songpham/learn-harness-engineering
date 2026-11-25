@@ -22,7 +22,7 @@
 **Session 1 — agent làm bootstrap, bạn duyệt từng gate.** Prompt kiểu:
 
 ```text
-Bạn đang ở repo <path>. Hãy đọc `archive/learn-harness-engineering/build_harness.md`,
+Bạn đang ở root, repo target tại <path>. Hãy đọc `archive/learn-harness-engineering/build_harness.md`,
 chỉ Sections 3–5 và Steps 0–3. Không làm gì ngoài scope này.
 
 Trước khi sửa file:
