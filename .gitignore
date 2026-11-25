@@ -2,6 +2,13 @@ temp/
 node_modules/
 coverage/
 
+/\.agents/
+/\.cargo/
+/\.opencode/
+/\.pi/
+/\.vscode/
+/openspec/
+
 # macOS / editor noise
 .DS_Store
 *.swp
