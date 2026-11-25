@@ -55,7 +55,7 @@ That includes the instructions the agent reads, the commands it can run, the sta
 | `docs/ARCHITECTURE.md` | System map | Layer diagram, dependency direction, data flows, IPC channels, storage layout, logging contract | 208 lines |
 | `docs/PRODUCT.md` | Product contract | User-visible features, flows, UI layout, behavior | 105 lines |
 | `docs/RELIABILITY.md` | Operational contract | Logging levels, clean-state reset, benchmarks, cleanup scanner | 178 lines |
-| `feature_list.json` | Scope and state | 15 features, each with status, evidence, and a `testedAt` timestamp | 126 lines |
+| `feature_list.json` | Scope and state | Any number of features (the reference has 15), each with status, evidence, and a `testedAt` timestamp | 126 lines |
 | `claude-progress.md` | Session log | Current verified state plus one record per session: goal, completed, decisions, evidence, next action | 40 lines |
 | `session-handoff.md` | Compact handoff | What was accomplished, what remains, decisions, files modified, blockers, next steps | 81 lines |
 | `init.sh` | One-command startup | Install, type-check, build, verify harness files, verify sample data, print start command | 70 lines |
@@ -572,6 +572,8 @@ The feature list is not a memo. It is the **queue and the contract**: the schedu
    - The agent may propose a state change, but the verification result decides.
 4. Calibrate granularity to "completable in one session." "Implement the shopping cart" is too broad. "User can add an item to the cart and see the count update" is right-sized.
 5. Add a validator script (JSON Schema, `jq`, Node, Python, or Go) that checks unique IDs, valid statuses, at most one `in_progress`, and evidence on every `passing` item. Run it in `init.sh` and CI. A minimal Node validator is in Appendix B.
+
+The count is not fixed. The reference has 15 features because that is the capstone scope; your repository can have 3, 30, or 300. The constraints are one schema, at most one `in_progress`, and evidence for every `passing` item. If the file grows too large to read in one session, split it by `area` or milestone, but keep exactly one canonical file for "what to work on next" and say so in `AGENTS.md`. Archive old `passing` items only if they add noise; otherwise keep them as history.
 
 **Minimum artifact.**
 
