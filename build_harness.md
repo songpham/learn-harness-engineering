@@ -2,7 +2,7 @@
 
 > A step-by-step recipe for turning any repository into a repository that an AI coding agent can start, verify, resume, and improve without asking a human.
 
-This guide is distilled from the reference implementation in [`projects/project-06/solution`](projects/project-06/solution). That project is a complete Electron + TypeScript + React application wrapped in a complete operating harness: instruction files, a machine-readable feature list, a one-command initializer, session handoff notes, a clean-state checklist, structured logging, benchmarks, a cleanup scanner, an evaluator rubric, and a quality document.
+This guide is distilled from the reference implementation in [`projects/project-06/solution`](projects/project-06/solution). That project is a complete Electron + TypeScript + React application wrapped in a strong operating harness (with a few deliberate gaps, listed in Section 1.6): instruction files, a machine-readable feature list, a one-command initializer, session handoff notes, a clean-state checklist, structured logging, benchmarks, a cleanup scanner, an evaluator rubric, and a quality document.
 
 The goal is not to copy those files blindly. The goal is to reproduce the **roles** they play, using the commands and conventions of whatever repository you are working in.
 
@@ -60,8 +60,8 @@ That includes the instructions the agent reads, the commands it can run, the sta
 | `session-handoff.md` | Compact handoff | What was accomplished, what remains, decisions, files modified, blockers, next steps | 81 lines |
 | `init.sh` | One-command startup | Install, type-check, build, verify harness files, verify sample data, print start command | 70 lines |
 | `clean-state-checklist.md` | Exit gate | 41 checkboxes across build, architecture, runtime, logging, data integrity, performance, repository, scripts | 68 lines |
-| `evaluator-rubric.md` | Independent review | Scored criteria, evidence, defects, overall verdict | 70 lines |
-| `quality-document.md` | Module health tracker | Per-module grades, evidence, known debt, overall grade | 61 lines |
+| `evaluator-rubric.md` | Review rubric and completed assessment | Scored criteria, evidence, defects, overall verdict | 70 lines |
+| `quality-document.md` | Quality snapshot and tracker template | Per-area or per-dimension grades, evidence, known debt, overall grade | 61 lines |
 | `scripts/check-architecture.sh` | Boundary enforcement | Executable checks for forbidden imports and layer violations | 85 lines |
 | `scripts/benchmark.sh` | Performance signal | Import, indexing, query, and integrity tasks with pass/fail thresholds | 180 lines |
 | `scripts/cleanup-scanner.sh` | Hygiene signal | Orphaned, dangling, missing, inconsistent, and stale artifacts | 253 lines |
@@ -76,7 +76,7 @@ The course model describes a harness as five subsystems. The reference project m
 | Subsystem | Question it answers | In `project-06/solution` |
 |---|---|---|
 | **Instructions** | What are the rules and where is the map? | `AGENTS.md`, `CLAUDE.md`, `docs/` |
-| **Environment** | Can I run it reproducibly? | `package.json`, lockfile, `init.sh`, TypeScript configs |
+| **Environment** | Can I run it reproducibly? | `package.json`, `init.sh`, TypeScript configs; no lockfile is checked in (see Section 1.6) |
 | **Tools** | What can I execute to inspect and change the system? | Shell, build scripts, test runner, benchmark, scanner |
 | **State** | Where are we, and what is next? | `feature_list.json`, `claude-progress.md`, `session-handoff.md`, git history |
 | **Feedback** | How do I know it actually works? | Tests, `init.sh`, architecture checks, benchmark, clean-state checklist, evaluator rubric, quality document |
@@ -124,7 +124,25 @@ Use these levels to locate your repository before you start:
 | **L4** | Observable | Structured logs, benchmarks, cleanup scanner | Agent can diagnose, measure, and detect drift |
 | **L5** | Self-correcting | CI enforcement, independent evaluation, periodic audit, module refactoring | Harness decays unless actively maintained |
 
-Most repositories are at L0 or L1. The recipe below moves you to L5 in small, reversible steps.
+Many repositories start at L0 or L1. The recipe below moves you to L5 in small, reversible steps.
+
+### 1.6 What the Reference Does Not Prove
+
+The reference is a teaching artifact, not a certification. It demonstrates the shape of a strong harness, but it has several deliberate or accidental gaps. Do not copy these:
+
+- **Automated tests are configured but missing.** `package.json` defines `npm test` with Vitest, but the checked-in solution contains no `.test` or `.spec` files. Its evidence is the build, runtime checklist, and benchmark. Treat this as a gap to close in your repository; Step 7 requires real tests and e2e coverage.
+- **The evaluator rubric is a completed assessment, not an enforced independent role.** The file contains scores and evidence, but nothing prevents the same session from generating and grading the work. Step 8 adds role separation; the reference does not demonstrate it.
+- **The quality document is a snapshot, not a trend.** It records one set of grades and an overall A, without history across updates. Use it as a template, then update yours over time.
+- **No lockfile or runtime version pin.** The checked-in solution has `package.json` but no `package-lock.json`, `pnpm-lock.yaml`, or `yarn.lock`, and no `.nvmrc`. `npm install` can resolve different versions over time. Commit a lockfile and pin the runtime.
+- **`init.sh` installs with `npm install`, not a frozen-lockfile install.** Prefer `npm ci` or the equivalent for reproducibility.
+- **The feature list uses `status: "pass"` and has no per-feature `verification` field.** It records evidence and `testedAt`, but the verification steps are not in the file. The recipe's schema adds `verification`; use one schema consistently and validate it.
+- **`AGENTS.md` and `CLAUDE.md` overlap.** The reference serves two tools, but duplicated rules drift. For a new repository, keep one canonical file and make the other a thin pointer.
+- **The benchmark's timing fallback can be coarse.** It prefers `python3` for sub-second timing and falls back to `date +%s`, which has one-second resolution. Use a monotonic millisecond clock in your implementation.
+- **No CI configuration is checked in.** `init.sh` and the scripts can be run manually, but nothing enforces them on every change. Add the pipeline from Step 13.
+- **The helper scripts are bash/Python.** They assume a Unix-like shell and Python 3. On Windows, run them under WSL/Git Bash or port them, and test the port against seeded failures.
+- **The layers are Electron-specific.** The main/preload/renderer/services/shared split illustrates boundaries, not a universal architecture. Adapt the dependency direction to your stack.
+
+None of these gaps invalidates the reference. They are the difference between a teaching example and a production harness. Close them in your repository, and record the decisions.
 
 ---
 
@@ -256,6 +274,8 @@ Instructions: 1 · Environment: 1 · Tools: 2 · State: 0 · Feedback: 0
 3. New session repeated completed work -> State
 ```
 
+Keep this audit as a dated snapshot. After Step 14, archive or delete it so it does not become another stale doc.
+
 **Exit gate.**
 
 - [ ] Baseline commands and results recorded.
@@ -292,6 +312,8 @@ Think of `AGENTS.md` as the **front desk of a building**, not the entire floor p
 3. Put critical constraints at the top or bottom, never buried in the middle. Long files suffer from the "lost in the middle" effect.
 4. For every rule, know why it exists, when it applies, and when it can be removed. A rule with no expiry condition becomes permanent debt.
 5. If you use `CLAUDE.md` too, make one file canonical and the other a thin pointer. Duplicating the same rules in two files guarantees drift.
+6. Apply the same Definition of Done to refactors, infrastructure changes, and documentation changes. They are work too: verify them and leave evidence.
+7. Measure the entry file's cost. `wc -w` is a rough proxy; a token counter is better. If `AGENTS.md` plus the docs loaded every session exceeds roughly 10% of the model's context budget, move detail into on-demand docs.
 
 **Minimum artifact.**
 
@@ -390,6 +412,7 @@ Think of it as **packing cubes for a suitcase**: essentials in the front pocket,
 5. Link every doc from `AGENTS.md` with a one-line "read when" condition.
 6. Keep each doc to roughly 50-200 lines. If it grows, split by topic.
 7. Update docs in the same commit as the code change. Stale documentation is worse than no documentation because it actively misleads.
+8. If `AGENTS.md` already links `docs/RELIABILITY.md`, create the file now or remove the link until Step 10. Broken links are worse than no links.
 
 **Exit gate.**
 
@@ -465,6 +488,16 @@ for file in AGENTS.md feature_list.json claude-progress.md clean-state-checklist
   fi
 done
 
+echo "==> Validating feature list"
+if [ -f scripts/validate-features.mjs ]; then
+  node scripts/validate-features.mjs
+fi
+
+echo "==> Architecture checks"
+if [ -f scripts/check-architecture.sh ]; then
+  bash scripts/check-architecture.sh
+fi
+
 echo "==> Startup command"
 printf '    %q' "${START_CMD[@]}"
 printf '\n'
@@ -484,7 +517,33 @@ fi
 
 **Pitfall.** Using `npm install` with unpinned versions, swallowing failures with `|| true`, or requiring manual database setup. A green `init.sh` that lies is worse than a red one that tells the truth.
 
-**Reference.** `projects/project-06/solution/init.sh` has five stages: install, type-check, build, harness-file verification, sample-data verification. It exits non-zero when anything is missing.
+**Reference.** `projects/project-06/solution/init.sh` has five stages: install, type-check, build, harness-file verification, sample-data verification. It exits non-zero when anything is missing. It uses `npm install`; prefer a frozen-lockfile install such as `npm ci` in your repository.
+
+### Environment and Tool Access (Companion to Step 3)
+
+`init.sh` proves the repository works on your machine. It does not prove that another machine can reproduce it, or that the agent is allowed to run the commands it needs. Two more checks close that gap.
+
+**Pin the environment.**
+
+- Commit the lockfile and use a frozen install in CI: `npm ci`, `pnpm install --frozen-lockfile`, `uv sync --frozen`, `go mod download` with a committed `go.sum`, or `cargo fetch` with `Cargo.lock`.
+- Pin the runtime: `.nvmrc`, `.python-version`, `rust-toolchain.toml`, the `go` directive in `go.mod`, or `.tool-versions`.
+- Optional but useful: a devcontainer or Dockerfile that reproduces the runtime and system dependencies.
+- Document external services (database, cache, API) and how `init.sh` handles them: local mock, container, or a clear skip with instructions.
+
+**Constrain tool access.**
+
+- In `AGENTS.md`, list allowed and forbidden commands. Example: allowed to run tests, build, and lint; forbidden to deploy, rotate credentials, or delete data outside the application's data directory.
+- Use least privilege for tokens and secrets. Put secrets in environment variables or a secret manager, never in the repository.
+- If a destructive command is necessary, require an explicit flag and a confirmation step.
+- Make network access explicit. If a service is unreachable, fail with a useful message instead of hanging.
+
+**Exit gate.**
+
+- [ ] A fresh clone on a clean machine passes `init.sh`.
+- [ ] The runtime version and lockfile are committed.
+- [ ] Tool permissions and forbidden actions are documented.
+- [ ] External services are mocked, containerized, or clearly documented.
+- [ ] Secrets are not in the repository or logs.
 
 ---
 
@@ -512,7 +571,7 @@ The feature list is not a memo. It is the **queue and the contract**: the schedu
    - `passing` requires evidence.
    - The agent may propose a state change, but the verification result decides.
 4. Calibrate granularity to "completable in one session." "Implement the shopping cart" is too broad. "User can add an item to the cart and see the count update" is right-sized.
-5. Add a validator script (JSON Schema, `jq`, Node, Python, or Go) that checks unique IDs, valid statuses, at most one `in_progress`, and evidence on every `passing` item. Run it in `init.sh` and CI.
+5. Add a validator script (JSON Schema, `jq`, Node, Python, or Go) that checks unique IDs, valid statuses, at most one `in_progress`, and evidence on every `passing` item. Run it in `init.sh` and CI. A minimal Node validator is in Appendix B.
 
 **Minimum artifact.**
 
@@ -561,6 +620,8 @@ The feature list is not a memo. It is the **queue and the contract**: the schedu
 
 "I ran it and it worked" is not evidence. Neither is a screenshot with no command or context.
 
+Store large evidence outside the JSON: keep a short path or identifier in `evidence`, and put the actual report or screenshot under `evidence/<feature-id>/` or in CI artifacts. Add a retention rule so evidence does not grow forever.
+
 **Exit gate.**
 
 - [ ] Every feature has behavior, verification, and state.
@@ -571,7 +632,7 @@ The feature list is not a memo. It is the **queue and the contract**: the schedu
 
 **Pitfall.** Treating the feature list as a wish list. A feature without a verification method is not a contract; it is a hope. Also avoid multiple `in_progress` items — that is how agents overreach and under-finish.
 
-**Reference.** `projects/project-06/solution/feature_list.json` tracks 15 features with status, evidence, and `testedAt`. Its schema differs slightly from the course template; consistency and validation matter more than the exact field names.
+**Reference.** `projects/project-06/solution/feature_list.json` tracks 15 features with status, evidence, and `testedAt`. It uses `status: "pass"` (not `passing`) and does not include a per-feature `verification` field; the verification steps live in the evidence text. That is a weaker schema than the template above. If you copy it, add `verification`, standardize on `passing` or `pass`, and validate the result.
 
 ### Step 5 — Create `claude-progress.md` and `session-handoff.md` for Continuity
 
@@ -583,10 +644,10 @@ Think of the progress file as the **shift log** at a hospital: what happened, wh
 
 1. In `claude-progress.md`, keep:
    - Current verified state: repository root, standard startup path, standard verification path, highest-priority unfinished feature, current blocker.
-   - A session record with goal, completed work, verification run, evidence, commits, known risks, and next best action.
+   - A session record with goal, completed work, verification run, evidence, decisions, files modified, commits, known risks, and next best action.
 2. In `session-handoff.md`, keep:
    - What is verified now.
-   - What changed this session.
+   - What changed this session, including decisions and files modified.
    - What is broken or unverified.
    - The next best step, why it is next, what counts as passing, and what must not change.
    - The startup, verification, and focused debug commands.
@@ -594,6 +655,7 @@ Think of the progress file as the **shift log** at a hospital: what happened, wh
 4. Use git commits as checkpoints. Commit after each verified atomic unit, with a message that explains what and why.
 5. Put the clock-in and clock-out routine in `AGENTS.md`.
 6. Update state after verification, never before. Do not claim a check that did not run.
+7. For short sessions, the handoff can be a short note; the progress file is still required. The handoff is most valuable when the session is long or the state is risky.
 
 **Exit gate.**
 
@@ -605,7 +667,7 @@ Think of the progress file as the **shift log** at a hospital: what happened, wh
 
 **Pitfall.** Turning the progress file into a diary that repeats the feature list. Keep it short and link to commits and logs. Also avoid stale handoffs — an outdated handoff is worse than none because it confidently points the next session in the wrong direction.
 
-**Reference.** `claude-progress.md` (40 lines) and `session-handoff.md` (81 lines) in the solution. The handoff records decisions such as using a singleton logger with `forService()`, storing feedback in a separate file, and using a destructive reset for simplicity.
+**Reference.** `claude-progress.md` (40 lines) and `session-handoff.md` (81 lines) in the solution. The handoff records decisions such as using a singleton logger with `forService()`, storing feedback in a separate file, and using a destructive reset for simplicity. Templates are in Appendix D and Appendix E.
 
 ### Step 6 — Create a Clean-State Checklist and Reset Mechanism
 
@@ -645,7 +707,7 @@ Think of clean state as **leaving the kitchen usable for the next cook**: dishes
 
 **Pitfall.** A 200-item manual checklist that nobody runs. Also dangerous: a reset script that deletes a broad directory or follows user input directly. Scope deletion to known application data paths, and fail closed if the path is unexpected.
 
-**Reference.** `clean-state-checklist.md` has 41 checkboxes across eight categories. The app exposes a reset IPC channel; `PersistenceService.resetAll()` removes and recreates the data directory, and the renderer clears its state after the reset.
+**Reference.** `clean-state-checklist.md` has 41 checkboxes across eight categories. The app exposes a reset IPC channel; `PersistenceService.resetAll()` removes and recreates the data directory, and the renderer clears its state after the reset. A smaller template is in Appendix F.
 
 ---
 
@@ -665,6 +727,9 @@ Think of the verification ladder as a **three-stage rocket**: static checks, beh
    - **L3 — System:** end-to-end checks for critical user flows, especially cross-component changes. Required before declaring a feature `passing`.
 2. Create one full-check command (`make check`, `scripts/check.sh`, or a package script) that runs L1 and L2 at minimum, and L3 when relevant.
 3. Ensure at least one example test passes before feature work begins. A test framework that has never run is not configured.
+
+**Legacy repository shortcut.** If the repository has no test framework, do not let that block the ladder. Add one smoke test that boots the app or CLI and asserts a known output or exit code. Then add characterization tests for the module you are about to change. That is enough to start; expand coverage as you touch code.
+
 4. Choose three to seven critical flows and automate them. Run them from a clean state. Include failure paths. Save artifacts: command output, screenshots, logs, test reports.
 5. Create `scripts/check-architecture.sh` for boundary rules:
    - Forbidden imports between layers.
@@ -689,7 +754,7 @@ Think of the verification ladder as a **three-stage rocket**: static checks, beh
 
 **Pitfall.** Unit tests only. They are designed to isolate components, which is exactly why they miss boundary defects. Also avoid "fixing" a failing test by weakening the assertion, and avoid changing verification rules during implementation.
 
-**Reference.** `scripts/check-architecture.sh` checks three rules: no Node core imports in the renderer, no Electron IPC in services, and no React imports in services or main. The solution also has a runtime checklist and benchmark-based verification. It does not automate full UI end-to-end tests; if your product has critical UI flows, add them.
+**Reference.** `scripts/check-architecture.sh` checks three rules: no Node core imports in the renderer, no Electron IPC in services, and no React imports in services or main. The solution also has a runtime checklist and benchmark-based verification. It has a `test` script but no checked-in test files, and it does not automate unit or full UI end-to-end tests; treat that as a gap to close, not a pattern to copy. If your product has critical UI flows, add them. A boundary-check template is in Appendix J.
 
 ### Step 8 — Add an Evaluator Rubric and Separate the Roles
 
@@ -732,7 +797,7 @@ Think of it as **code review by a different person**: the person who wrote the c
 
 **Pitfall.** Same-context self-review. The model is systematically overconfident about its own work. Also avoid a rubric with vague words like "clean" or "good" that different evaluators interpret differently.
 
-**Reference.** `projects/project-06/solution/evaluator-rubric.md` scores 15 criteria on a 1-5 scale with notes and evidence. The related Project 05 variants show the effect of role separation: single-role 1.6/5, generator + evaluator 3.3/5, planner + generator + evaluator 4.9/5. The exact numbers are less important than the pattern: independent evaluation catches more defects.
+**Reference.** `projects/project-06/solution/evaluator-rubric.md` is a completed assessment with 15 criteria, notes, and evidence. It is not an enforced independent evaluation: nothing prevents the same author or session from producing and scoring the work. The checked-in Project 05 variants report single-role 1.6/5, generator + evaluator 3.3/5, and planner + generator + evaluator 4.9/5. Treat those as reported comparisons, not controlled measurements. The pattern matters more than the numbers: independent evaluation catches more defects. A rubric template is in Appendix G; a compact sprint contract template is in Appendix K.
 
 ### Step 9 — Maintain a Quality Document
 
@@ -765,7 +830,7 @@ Think of it as a **health dashboard for the codebase**, not a one-time report ca
 
 **Pitfall.** A one-time document with inflated grades. If every module is an A while tests are flaky and docs are stale, the document is lying. Also avoid excessive granularity: module-level is usually enough.
 
-**Reference.** `projects/project-06/solution/quality-document.md` grades 15 dimensions and records evidence from the build, runtime, observability, performance, and verification checklist.
+**Reference.** `projects/project-06/solution/quality-document.md` grades 15 dimensions and records evidence from the build, runtime, observability, performance, and verification checklist. It is a snapshot rather than a trend: there is one overall grade and no history across updates. Use it as the template, then keep your own dated history. A compact template is in Appendix H.
 
 ---
 
@@ -826,7 +891,7 @@ Think of structured logs as the **flight recorder** of the application. A plain 
 
 **Exit gate.**
 
-- [ ] All production log lines are valid JSON.
+- [ ] All application log lines are valid JSON.
 - [ ] Every critical flow emits at least a start and a success or failure event.
 - [ ] Logs include the identifiers needed to debug that flow.
 - [ ] No secrets or personal data are logged.
@@ -835,7 +900,7 @@ Think of structured logs as the **flight recorder** of the application. A plain 
 
 **Pitfall.** Logging only errors. That gives you a record of failures with no context about what succeeded before them. Also avoid logging everything at DEBUG in production; noise hides signal and costs money.
 
-**Reference.** `projects/project-06/solution/src/services/logger.ts` implements levels, a child logger, and JSON output. All five services emit structured logs; the document, indexing, and QA services use `logger.forService()` child loggers, while persistence and the IPC handlers use the base logger with an explicit service tag. `docs/RELIABILITY.md` documents the levels and logging points.
+**Reference.** `projects/project-06/solution/src/services/logger.ts` implements levels, a child logger, and JSON output. All five services emit structured logs; the document, indexing, and QA services use `logger.forService()` child loggers, while persistence and the IPC handlers use the base logger with an explicit service tag. `docs/RELIABILITY.md` documents the levels and logging points. A language-agnostic contract is in Appendix I.
 
 ### Step 11 — Add a Benchmark and a Cleanup Scanner
 
@@ -857,6 +922,9 @@ Think of the benchmark as a **scale** and the cleanup scanner as a **Roomba that
    - Inconsistent status flags.
    - Stale references to deleted entities.
    - Temporary files, debug code, TODO/FIXME markers, and stale docs.
+
+   Exclude `node_modules`, `dist`, generated code, and vendor directories from the scan.
+
 7. Make the scanner read-only by default. If it supports `--fix`, require an explicit flag, scope it to known paths, make it idempotent, and print exactly what it will delete.
 8. Run the benchmark and scanner in `init.sh` (fast checks) or CI/weekly (slow checks).
 
@@ -868,9 +936,9 @@ Think of the benchmark as a **scale** and the cleanup scanner as a **Roomba that
 - [ ] A clean repository produces no false positives.
 - [ ] Both scripts are safe to run repeatedly.
 
-**Pitfall.** Benchmarking a dirty state, or comparing numbers collected under different conditions. Also avoid a scanner that deletes data by default; a hygiene tool that can destroy work will not be trusted or run.
+**Pitfall.** Benchmarking a dirty state, or comparing numbers collected under different conditions. Do not use a one-second clock (`date +%s`) for sub-second thresholds; use a monotonic millisecond timer. The reference's `python3`/`date` fallback is a teaching shortcut, not a production timer. Also avoid a scanner that deletes data by default; a hygiene tool that can destroy work will not be trusted or run. Finally, test the scanner's exit code and issue count, not just its printed text: shell pipelines run in subshells, and a counter incremented inside `while read` may silently reset.
 
-**Reference.** `scripts/benchmark.sh` runs four tasks and reports pass/fail. `scripts/cleanup-scanner.sh` checks orphaned content, dangling chunks, missing content, inconsistent metadata, and stale Q&A references. Both are shell scripts with no application dependency.
+**Reference.** `scripts/benchmark.sh` runs four tasks and reports pass/fail. `scripts/cleanup-scanner.sh` checks orphaned content, dangling chunks, missing content, inconsistent metadata, and stale Q&A references. Both are shell scripts with no application dependency. The scanner uses Python 3; port it if your environment does not provide Python.
 
 ---
 
@@ -889,8 +957,10 @@ Think of a warehouse: if nails, screws, and anchors are mixed in one bin, every 
 1. **Inventory the current state.**
    - List modules and their one-sentence responsibilities.
    - List public entry points and internal imports.
+   - Use a dependency analyzer appropriate to the stack: `madge` or `dependency-cruiser` for JS/TS, `import-linter` for Python, `cargo modules` or `cargo-deny` for Rust, `go list -deps` for Go. Do not guess the graph from grep alone.
    - Find cycles, hidden globals, duplicated logic, and oversized files.
    - Identify where the UI reaches into infrastructure, or where business logic lives in the wrong layer.
+   - Exclude generated and vendor directories from the analysis; document how they are generated.
 2. **Define the target.**
    - Group by responsibility, not by file type.
    - Choose a dependency direction (for example: UI -> application -> domain -> infrastructure; or renderer -> preload -> main -> services -> shared).
@@ -938,7 +1008,7 @@ Think of a warehouse: if nails, screws, and anchors are mixed in one bin, every 
 - [ ] The full test suite, e2e checks, and benchmark remain green.
 - [ ] A fresh agent can find where to add a small feature without scanning the whole repository.
 
-**Pitfall.** Big-bang refactoring, or "while I am here" refactoring during a feature. Both destroy the ability to attribute failures. Also avoid ceremonial architecture that adds layers without reducing coupling.
+**Pitfall.** Big-bang refactoring, or "while I am here" refactoring during a feature. Both destroy the ability to attribute failures. Also avoid ceremonial architecture that adds layers without reducing coupling, and never refactor generated or vendor code by hand.
 
 **Reference.** The reference app's boundary checks and `docs/ARCHITECTURE.md` are a good template for the rules; the exact layers are Electron-specific and should be adapted.
 
@@ -980,6 +1050,11 @@ Think of CI as the **automatic gatekeeper** at the door: it checks the ticket ev
    - Benchmark trend.
    - Count of stale docs and open TODOs.
 7. Run a controlled ablation occasionally: remove one harness component, measure the effect, restore it. This tells you which components still earn their keep.
+8. Treat flaky tests as failures, not noise. Quarantine the test with an owner and a fix deadline; do not add retries just to make CI green. A retry that hides a race condition is a false pass.
+9. When multiple agents work in parallel, isolate them with git worktrees or branches. Give each feature one owner and avoid concurrent writes to the same feature list, progress, or handoff files. Merge through CI, not by copying files between worktrees.
+10. If a session cannot be recovered, revert to the last green commit, record the failure and the decision in the handoff, and start the next session from a known-good state. Do not build on a broken baseline.
+
+A generic CI sketch is in Appendix L; adapt the stages to your stack.
 
 **Exit gate.**
 
@@ -1071,6 +1146,12 @@ Rules that apply to every stack:
 - Keep logs JSON-serializable.
 - Scope destructive cleanup to application data.
 - Do not let the harness depend on one editor or one agent vendor.
+
+### Monorepos, Legacy Code, and Generated Code
+
+- **Monorepo:** keep a root `init.sh` that delegates to the affected packages. Use one root feature list with an `area` field, or per-package lists with a clear owner. Enforce package boundaries with the same architecture check.
+- **Legacy code:** start with a smoke test and characterization tests around the module you will touch. Add the verification ladder incrementally; do not wait for a perfect suite before making the first safe change.
+- **Generated code:** exclude generated and vendor directories from architecture and scanner checks. Record the generation command and verify that regenerating produces no diff.
 
 ---
 
@@ -1214,6 +1295,40 @@ These are **minimum viable** versions. Replace placeholders with real commands a
 }
 ```
 
+Minimal validator (`scripts/validate-features.mjs`):
+
+```js
+import fs from "node:fs";
+
+const data = JSON.parse(fs.readFileSync("feature_list.json", "utf8"));
+const valid = new Set(["not_started", "in_progress", "blocked", "passing"]);
+const errors = [];
+const ids = new Set();
+let active = 0;
+
+for (const f of data.features ?? []) {
+  if (!f.id || ids.has(f.id)) errors.push(`Invalid or duplicate id: ${f.id}`);
+  ids.add(f.id);
+  if (!valid.has(f.status)) errors.push(`${f.id}: invalid status "${f.status}"`);
+  if (f.status === "in_progress") active += 1;
+  if (f.status === "passing" && (!Array.isArray(f.evidence) || f.evidence.length === 0)) {
+    errors.push(`${f.id}: passing without evidence`);
+  }
+  if (!Array.isArray(f.verification) || f.verification.length === 0) {
+    errors.push(`${f.id}: missing verification steps`);
+  }
+}
+
+if (active > 1) errors.push(`More than one in_progress feature: ${active}`);
+if (errors.length) {
+  console.error(errors.join("\n"));
+  process.exit(1);
+}
+console.log("feature_list.json OK");
+```
+
+Run `node scripts/validate-features.mjs` from `init.sh` and CI. If you keep the reference's `status: "pass"`, add `"pass"` to the valid set or migrate the file.
+
 ### C. `init.sh`
 
 ```bash
@@ -1252,6 +1367,16 @@ for file in AGENTS.md feature_list.json claude-progress.md clean-state-checklist
   fi
 done
 
+echo "==> Validating feature list"
+if [ -f scripts/validate-features.mjs ]; then
+  node scripts/validate-features.mjs
+fi
+
+echo "==> Architecture checks"
+if [ -f scripts/check-architecture.sh ]; then
+  bash scripts/check-architecture.sh
+fi
+
 echo "==> Startup command"
 printf '    %q' "${START_CMD[@]}"
 printf '\n'
@@ -1279,6 +1404,8 @@ fi
 - Completed:
 - Verification run:
 - Evidence:
+- Decisions:
+- Files modified:
 - Commits:
 - Known risks:
 - Next best action:
@@ -1296,6 +1423,8 @@ fi
 ## Changed This Session
 - Code or behavior:
 - Infrastructure or harness:
+- Decisions:
+- Files modified:
 
 ## Broken Or Unverified
 - Known defect:
@@ -1353,6 +1482,7 @@ fi
 - [ ] No secrets, build output, or temp files staged.
 - [ ] Feature list and progress are current.
 - [ ] Handoff is current if the session ends.
+- [ ] Docs are updated or explicitly marked unchanged.
 
 ## Scripts
 - [ ] `init.sh` passes.
@@ -1395,6 +1525,10 @@ fi
 
 ```markdown
 # Quality Document
+
+## Overall
+- Overall grade: `<A-D>`
+- Last updated: `<date>`
 
 ## Summary
 | Area | Grade | Verification | Agent readability | Test stability | Architecture |
@@ -1490,6 +1624,68 @@ echo "PASS: All architecture checks passed."
 
 Adapt the paths and rules to your repository. If you use `ripgrep` in CI, pin the version or use a portable grep wrapper.
 
+### K. `sprint-contract.md`
+
+```markdown
+# Sprint Contract — <feature>
+
+## Scope
+- Files or modules in scope:
+- Behavior to add or change:
+- Data or API changes:
+
+## Verification
+- Commands to run:
+- Critical flow to exercise:
+- Evidence to capture:
+
+## Exclusions
+- Not doing:
+- Not touching:
+
+## Done Criteria
+- [ ] Behavior is observable and verified.
+- [ ] Required checks passed.
+- [ ] Evidence is recorded.
+- [ ] Docs and state are updated.
+```
+
+### L. CI Pipeline Sketch
+
+```yaml
+name: harness
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: npm run build
+      - run: bash scripts/check-architecture.sh
+      - run: node scripts/validate-features.mjs
+      - run: bash scripts/cleanup-scanner.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verification-output
+          path: |
+            coverage/
+            test-results/
+```
+
+This is a Node example; adapt the setup action and commands to your stack, and pin action versions in a real repository. Enable branch protection so this job must pass before merge. Do not use `|| true` or `continue-on-error` to make it green.
+
 ---
 
 ## 14. Final Checklist
@@ -1504,7 +1700,8 @@ Use this before calling a repository "harness-ready":
 - [ ] The clean-state checklist passes, and reset is idempotent.
 - [ ] The full check covers static checks, tests, and e2e for critical flows.
 - [ ] Architecture boundaries are enforced by a script or linter.
-- [ ] An independent evaluator scores against a rubric with evidence.
+- [ ] An independent evaluator scores against a rubric with evidence; the evaluator is not the generator.
+- [ ] Environment and tool access are pinned and documented (lockfile, runtime version, secrets, permissions).
 - [ ] The quality document is current and the weakest module has an action.
 - [ ] Logs are structured JSON, parseable, and free of secrets.
 - [ ] Benchmarks have a baseline and thresholds.
@@ -1514,3 +1711,23 @@ Use this before calling a repository "harness-ready":
 - [ ] Metrics show improvement over the Step 0 baseline.
 
 If the scorecard is at least 20/24 and most boxes here are checked, you have a repository that an agent can operate. If not, pick the lowest-scoring subsystem and fix that first. **Do less, finish more, leave evidence.** That is the whole harness discipline.
+
+---
+
+## 15. Known Limitations
+
+This guide is intentionally stack-agnostic and role-focused. It does not include:
+
+- **Full benchmark and scanner implementations.** Step 11 defines the checks; the reference has shell scripts. Port them to your language and test them against seeded failures.
+- **Full architecture and product document templates.** Step 2 lists the required sections; use the reference docs as examples and adapt them to your domain.
+- **Detailed 1-5 rubric anchors.** Appendix G lists dimensions; define concrete anchors for your product so two evaluators reach similar scores.
+- **A full logger implementation.** Appendix I is a contract; the reference `logger.ts` is a TypeScript implementation. Adapt it or use your stack's structured logger.
+- **A security threat model.** The guide covers secrets, boundaries, and least privilege, but not authentication, authorization, dependency supply chain, or sandboxing. Add those for production.
+- **A complete multi-agent protocol.** Step 13 gives isolation basics; larger teams need branch ownership, merge queues, and conflict-resolution policies.
+- **Deep monorepo guidance.** Section 10 gives the shape; per-package versioning, affected-only CI, and ownership need separate design.
+- **A migration and rollback playbook.** Step 13 says to revert to the last green commit; schema and data migrations need their own forward and backward plan.
+- **A performance profiling methodology.** The benchmark measures outcomes; it does not explain how to profile CPU, memory, or I/O.
+- **Product and UX quality criteria.** The rubric covers behavior, architecture, and security; accessibility, visual quality, and product fit need domain-specific criteria.
+- **Harness cost measurement.** The context-budget note is a heuristic; exact token accounting per file and per session is tool-specific.
+
+Add the missing pieces that matter for your risk profile. Do not add all of them by default: harness ceremony has a real cost, and every component must earn its keep.
